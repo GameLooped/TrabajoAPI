@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const typeColors = {
   normal: 'bg-stone-400',
@@ -22,6 +23,7 @@ const typeColors = {
 };
 
 export default function PokemonCard({ pokemon }) {
+  const { t } = useLanguage();
   const mainType = pokemon.types[0].type.name;
   const bgColor = typeColors[mainType] || 'bg-slate-200';
 
@@ -44,24 +46,24 @@ export default function PokemonCard({ pokemon }) {
         
         <h2 className="text-2xl font-bold capitalize text-slate-800 mb-2">{pokemon.name}</h2>
         
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap justify-center">
           {pokemon.types.map((typeInfo) => (
             <span 
               key={typeInfo.type.name}
               className={`px-3 py-1 rounded-full text-xs font-semibold text-white shadow-sm ${typeColors[typeInfo.type.name]}`}
             >
-              {typeInfo.type.name.toUpperCase()}
+              {t(`types.${typeInfo.type.name}`).toUpperCase()}
             </span>
           ))}
         </div>
 
         <div className="w-full grid grid-cols-2 gap-2 text-sm">
           <div className="bg-white/50 rounded-lg p-2 text-center">
-            <p className="text-slate-500 font-semibold text-xs mb-1">Height</p>
+            <p className="text-slate-500 font-semibold text-xs mb-1">{t('height')}</p>
             <p className="font-bold">{pokemon.height / 10} m</p>
           </div>
           <div className="bg-white/50 rounded-lg p-2 text-center">
-            <p className="text-slate-500 font-semibold text-xs mb-1">Weight</p>
+            <p className="text-slate-500 font-semibold text-xs mb-1">{t('weight')}</p>
             <p className="font-bold">{pokemon.weight / 10} kg</p>
           </div>
         </div>
