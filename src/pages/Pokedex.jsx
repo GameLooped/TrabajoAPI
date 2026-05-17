@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PokemonCard from '../components/PokemonCard';
 import Filters from '../components/Filters';
+import PokemonModal from '../components/PokemonModal';
 import { useLanguage } from '../context/LanguageContext';
-import { LogOut } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { LogOut, Sun, Moon } from 'lucide-react';
 
 export default function Pokedex() {
   const [pokemonList, setPokemonList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPokemon, setSelectedPokemon] = useState(null);
   
   // States for filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +20,7 @@ export default function Pokedex() {
   const [legendaryIds, setLegendaryIds] = useState(new Set()); // To store which IDs are legendary
 
   const { t, lang, toggleLanguage } = useLanguage();
+  const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   // On mount
@@ -86,26 +90,34 @@ export default function Pokedex() {
     <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-white border-4 border-slate-800 relative overflow-hidden flex items-center justify-center">
-             <div className="absolute top-0 w-full h-1/2 bg-red-500 border-b-2 border-slate-800"></div>
-             <div className="w-2.5 h-2.5 rounded-full bg-white border border-slate-800 relative z-10"></div>
+          <div className="w-10 h-10 rounded-full bg-white border-4 border-slate-800 dark:border-slate-900 relative overflow-hidden flex items-center justify-center">
+             <div className="absolute top-0 w-full h-1/2 bg-red-500 border-b-2 border-slate-800 dark:border-slate-900"></div>
+             <div className="w-2.5 h-2.5 rounded-full bg-white border border-slate-800 dark:border-slate-900 relative z-10"></div>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-            Poké<span className="text-red-500">dex</span>
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+            Nexus<span className="text-red-500">Dex</span>
           </h1>
         </div>
         
         <div className="flex items-center gap-4">
-          <span className="text-slate-500 font-medium hidden sm:inline">{t('welcome')}, Ash!</span>
-          <button 
-            onClick={toggleLanguage}
-            className="bg-white/80 px-4 py-2 rounded-full shadow-sm font-bold text-slate-700 hover:bg-white transition border border-slate-200"
-          >
-            {lang === 'es' ? '🇺🇸 EN' : '🇪🇸 ES'}
-          </button>
+          <span className="text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">{t('welcome')}, Ash!</span>
+          <div className="flex gap-2">
+            <button 
+              onClick={toggleTheme}
+              className="bg-white/80 dark:bg-slate-800/80 p-2 rounded-full shadow-sm text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700"
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button 
+              onClick={toggleLanguage}
+              className="bg-white/80 dark:bg-slate-800/80 px-4 py-2 rounded-full shadow-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700"
+            >
+              {lang === 'es' ? '🇺🇸 EN' : '🇪🇸 ES'}
+            </button>
+          </div>
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full font-bold text-slate-700 transition"
+            className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 px-4 py-2 rounded-full font-bold text-slate-700 dark:text-slate-200 transition"
           >
             <LogOut size={16} />
             <span className="hidden sm:inline">{t('logout')}</span>
@@ -130,15 +142,24 @@ export default function Pokedex() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredList.map((pokemon) => (
-              <PokemonCard key={pokemon.id} pokemon={pokemon} />
+              <PokemonCard 
+                key={pokemon.id} 
+                pokemon={pokemon} 
+                onClick={() => setSelectedPokemon(pokemon)}
+              />
             ))}
             {filteredList.length === 0 && (
-              <div className="col-span-full text-center py-12 text-slate-500 font-medium text-lg">
+              <div className="col-span-full text-center py-12 text-slate-500 dark:text-slate-400 font-medium text-lg">
                 No Pokémon found matching your criteria.
               </div>
             )}
           </div>
         )}
+        
+        <PokemonModal 
+          pokemon={selectedPokemon} 
+          onClose={() => setSelectedPokemon(null)} 
+        />
       </main>
     </div>
   );

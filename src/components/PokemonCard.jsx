@@ -22,14 +22,17 @@ const typeColors = {
   fairy: 'bg-pink-300',
 };
 
-export default function PokemonCard({ pokemon }) {
+export default function PokemonCard({ pokemon, onClick }) {
   const { t } = useLanguage();
   const mainType = pokemon.types[0].type.name;
   const bgColor = typeColors[mainType] || 'bg-slate-200';
 
   return (
-    <div className={`relative group overflow-hidden rounded-2xl shadow-lg transition-transform hover:-translate-y-2 hover:shadow-xl ${bgColor} bg-opacity-20`}>
-      <div className={`absolute top-0 left-0 w-full h-24 ${bgColor} bg-opacity-60 rounded-b-[40%]`}></div>
+    <div 
+      onClick={onClick}
+      className={`relative group overflow-hidden rounded-2xl shadow-lg cursor-pointer transition-transform hover:-translate-y-2 hover:shadow-xl ${bgColor} bg-opacity-20 dark:bg-opacity-30`}
+    >
+      <div className={`absolute top-0 left-0 w-full h-24 ${bgColor} bg-opacity-60 dark:bg-opacity-80 rounded-b-[40%]`}></div>
       
       <div className="relative p-6 pt-8 flex flex-col items-center">
         <div className="absolute top-4 right-4 text-slate-700/50 font-bold text-xl">
@@ -44,7 +47,7 @@ export default function PokemonCard({ pokemon }) {
           />
         </div>
         
-        <h2 className="text-2xl font-bold capitalize text-slate-800 mb-2">{pokemon.name}</h2>
+        <h2 className="text-2xl font-bold capitalize text-slate-800 dark:text-white mb-2">{pokemon.name}</h2>
         
         <div className="flex gap-2 mb-4 flex-wrap justify-center">
           {pokemon.types.map((typeInfo) => (
@@ -58,13 +61,13 @@ export default function PokemonCard({ pokemon }) {
         </div>
 
         <div className="w-full grid grid-cols-2 gap-2 text-sm">
-          <div className="bg-white/50 rounded-lg p-2 text-center">
-            <p className="text-slate-500 font-semibold text-xs mb-1">{t('height')}</p>
-            <p className="font-bold">{pokemon.height / 10} m</p>
+          <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-2 text-center">
+            <p className="text-slate-500 dark:text-slate-400 font-semibold text-xs mb-1">{t('height')}</p>
+            <p className="font-bold text-slate-800 dark:text-white">{pokemon.height / 10} m</p>
           </div>
-          <div className="bg-white/50 rounded-lg p-2 text-center">
-            <p className="text-slate-500 font-semibold text-xs mb-1">{t('weight')}</p>
-            <p className="font-bold">{pokemon.weight / 10} kg</p>
+          <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-2 text-center">
+            <p className="text-slate-500 dark:text-slate-400 font-semibold text-xs mb-1">{t('weight')}</p>
+            <p className="font-bold text-slate-800 dark:text-white">{pokemon.weight / 10} kg</p>
           </div>
         </div>
       </div>
