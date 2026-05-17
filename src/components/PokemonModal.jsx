@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { X } from 'lucide-react';
 
@@ -11,7 +11,33 @@ const typeColors = {
 };
 
 export default function PokemonModal({ pokemon, onClose }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    if (pokemon) {
+      setDescription(''); // Reset description when opening a new pokemon
+      fetch(pokemon.species.url)
+        .then(res => res.json())
+        .then(data => {
+          const entry = data.flavor_text_entries.find(
+            e => e.language.name === lang
+          );
+          const fallbackEntry = data.flavor_text_entries.find(
+            e => e.language.name === 'en'
+          );
+          
+          if (entry) {
+            setDescription(entry.flavor_text.replace(/[\f\n\r]/g, ' '));
+          } else if (fallbackEntry) {
+            setDescription(fallbackEntry.flavor_text.replace(/[\f\n\r]/g, ' '));
+          } else {
+            setDescription('');
+          }
+        })
+        .catch(err => console.error("Error fetching species:", err));
+    }
+  }, [pokemon, lang]);
   if (!pokemon) return null;
 
   const mainType = pokemon.types[0].type.name;
@@ -52,9 +78,19 @@ export default function PokemonModal({ pokemon, onClose }) {
           </div>
         </div>
 
-        {/* Right Side: Stats */}
+        {/* Right Side: Stats and Description */}
         <div className="w-full md:w-3/5 p-8 flex flex-col justify-center">
-          <h2 className="text-4xl font-black capitalize text-slate-800 dark:text-white mb-6">{pokemon.name}</h2>
+          <h2 className="text-4xl font-black capitalize text-slate-800 dark:text-white mb-2">{pokemon.name}</h2>
+          
+          {description ? (
+            <p className="text-slate-600 dark:text-slate-300 italic mb-6 text-sm leading-relaxed">
+              "{description}"
+            </p>
+          ) : (
+            <div className="mb-6 h-10 flex items-center">
+              <div className="animate-pulse bg-slate-200 dark:bg-slate-700 h-4 w-3/4 rounded"></div>
+            </div>
+          )}
           
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 text-center">
