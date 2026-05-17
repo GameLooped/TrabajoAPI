@@ -16,12 +16,21 @@ const translations = {
     weight: 'Peso',
     logout: 'Cerrar Sesión',
     welcome: 'Bienvenido',
+    baseStats: 'Estadísticas Base',
     types: {
       normal: 'Normal', fire: 'Fuego', water: 'Agua', electric: 'Eléctrico',
       grass: 'Planta', ice: 'Hielo', fighting: 'Lucha', poison: 'Veneno',
       ground: 'Tierra', flying: 'Volador', psychic: 'Psíquico', bug: 'Bicho',
       rock: 'Roca', ghost: 'Fantasma', dragon: 'Dragón', dark: 'Siniestro',
       steel: 'Acero', fairy: 'Hada'
+    },
+    stats: {
+      hp: 'PS',
+      attack: 'Ataque',
+      defense: 'Defensa',
+      'special-attack': 'Ataque Especial',
+      'special-defense': 'Defensa Especial',
+      speed: 'Velocidad'
     }
   },
   en: {
@@ -39,12 +48,21 @@ const translations = {
     weight: 'Weight',
     logout: 'Logout',
     welcome: 'Welcome',
+    baseStats: 'Base Stats',
     types: {
       normal: 'Normal', fire: 'Fire', water: 'Water', electric: 'Electric',
       grass: 'Grass', ice: 'Ice', fighting: 'Fighting', poison: 'Poison',
       ground: 'Ground', flying: 'Flying', psychic: 'Psychic', bug: 'Bug',
       rock: 'Rock', ghost: 'Ghost', dragon: 'Dragon', dark: 'Dark',
       steel: 'Steel', fairy: 'Fairy'
+    },
+    stats: {
+      hp: 'HP',
+      attack: 'Attack',
+      defense: 'Defense',
+      'special-attack': 'Sp. Attack',
+      'special-defense': 'Sp. Defense',
+      speed: 'Speed'
     }
   }
 };

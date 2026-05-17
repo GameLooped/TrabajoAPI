@@ -67,15 +67,14 @@ export default function PokemonModal({ pokemon, onClose }) {
             </div>
           </div>
 
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Base Stats</h3>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">{t('baseStats') || 'Base Stats'}</h3>
           <div className="space-y-3">
             {pokemon.stats.map(statInfo => {
-              const statName = statInfo.stat.name.replace('-', ' ');
               const percentage = Math.min((statInfo.base_stat / 255) * 100, 100);
               return (
                 <div key={statInfo.stat.name}>
                   <div className="flex justify-between text-sm font-semibold mb-1">
-                    <span className="capitalize text-slate-600 dark:text-slate-300">{statName}</span>
+                    <span className="capitalize text-slate-600 dark:text-slate-300">{t(`stats.${statInfo.stat.name}`) || statInfo.stat.name}</span>
                     <span className="text-slate-800 dark:text-white">{statInfo.base_stat}</span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
