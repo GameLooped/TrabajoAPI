@@ -1,60 +1,89 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './index.css';
+import PokemonCard from './components/PokemonCard';
 
 function App() {
+  const [pokemonList, setPokemonList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [nextUrl, setNextUrl] = useState('https://pokeapi.co/api/v2/pokemon?limit=20');
+
+  const fetchPokemonData = async (url) => {
+    try {
+      setLoading(true);
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      setNextUrl(data.next);
+
+      // Fetch details for each pokemon
+      const pokemonPromises = data.results.map(async (pokemon) => {
+        const pokeRes = await fetch(pokemon.url);
+        return pokeRes.json();
+      });
+
+      const newPokemon = await Promise.all(pokemonPromises);
+      setPokemonList((prev) => [...prev, ...newPokemon]);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching Pokemon data:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPokemonData('https://pokeapi.co/api/v2/pokemon?limit=20');
+  }, []);
+
   return (
-    <>
-      <nav className="navbar glass">
-        <div className="logo">NexusTech</div>
-        <ul className="nav-links">
-          <li><a href="#features">Features</a></li>
-          <li><a href="#solutions">Solutions</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-        <button className="btn btn-outline">Sign In</button>
-      </nav>
-
-      <main className="hero">
-        <div className="hero-content">
-          <div className="badge">🚀 Introducing NexusTech 2.0</div>
-          <h1 className="title">
-            Build the future with <span>stunning JSX pages</span>
-          </h1>
-          <p className="subtitle">
-            Experience next-generation web development. We provide tools to create beautiful, responsive, and blazing-fast applications that your users will love.
-          </p>
-          <div className="cta-group">
-            <button className="btn btn-primary">
-              Get Started Free
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </button>
-            <button className="btn btn-outline">View Documentation</button>
+    <div className="min-h-screen p-8 max-w-7xl mx-auto">
+      <header className="mb-12 text-center">
+        <h1 className="text-5xl font-extrabold text-slate-800 tracking-tight flex items-center justify-center gap-4">
+          <span className="text-red-500">Poké</span>dex
+          <div className="w-8 h-8 rounded-full bg-white border-4 border-slate-800 relative overflow-hidden flex items-center justify-center">
+             <div className="absolute top-0 w-full h-1/2 bg-red-500 border-b-2 border-slate-800"></div>
+             <div className="w-2 h-2 rounded-full bg-white border border-slate-800 relative z-10"></div>
           </div>
-        </div>
-      </main>
+        </h1>
+        <p className="text-slate-500 mt-4 text-lg">
+          Browse through the incredible world of Pokémon
+        </p>
+      </header>
 
-      <section className="features" id="features">
-        <div className="feature-card glass">
-          <div className="feature-icon">✨</div>
-          <h3 className="feature-title">Premium Design</h3>
-          <p className="feature-desc">Crafted with modern aesthetics, glassmorphism, and beautiful typography to impress your users at first sight.</p>
-        </div>
-        <div className="feature-card glass">
-          <div className="feature-icon">⚡️</div>
-          <h3 className="feature-title">Lightning Fast</h3>
-          <p className="feature-desc">Powered by Vite and React, ensuring rapid development cycles and incredibly fast load times for production.</p>
-        </div>
-        <div className="feature-card glass">
-          <div className="feature-icon">🛡️</div>
-          <h3 className="feature-title">Rock Solid</h3>
-          <p className="feature-desc">Built on reliable foundations and best practices to guarantee a robust, scalable, and maintainable codebase.</p>
-        </div>
-      </section>
-    </>
+      <main>
+        {pokemonList.length === 0 && loading ? (
+          <div className="flex justify-center items-center h-64">
+             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-500"></div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {pokemonList.map((pokemon) => (
+                <PokemonCard key={pokemon.id} pokemon={pokemon} />
+              ))}
+            </div>
+            
+            <div className="mt-12 flex justify-center">
+              {nextUrl && (
+                <button 
+                  onClick={() => fetchPokemonData(nextUrl)}
+                  disabled={loading}
+                  className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Pokémon'
+                  )}
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </main>
+    </div>
   );
 }
 
