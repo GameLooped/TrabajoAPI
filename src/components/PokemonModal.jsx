@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Volume2, Sparkles, Image as ImageIcon, Layers } from 'lucide-react';
+import { X, Volume2, Sparkles, Image as ImageIcon, Layers, MapPin } from 'lucide-react';
 
 const typeColors = {
   normal: 'bg-stone-400', fire: 'bg-red-500', water: 'bg-blue-500', electric: 'bg-yellow-400',
@@ -32,8 +32,10 @@ export default function PokemonModal({ pokemon, onClose }) {
   const [description, setDescription] = useState('');
   const [evolutionChain, setEvolutionChain] = useState([]);
   const [typeRelations, setTypeRelations] = useState({ weaknesses: [], resistances: [], immunities: [] });
-  const [imageStyle, setImageStyle] = useState('official'); // official, showdown, pixel
+  const [imageStyle, setImageStyle] = useState('official');
   const [isLoadingExtra, setIsLoadingExtra] = useState(true);
+  const [locations, setLocations] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -45,6 +47,8 @@ export default function PokemonModal({ pokemon, onClose }) {
       setEvolutionChain([]);
       setDescription('');
       setTypeRelations({ weaknesses: [], resistances: [], immunities: [] });
+      setLocations([]);
+      setLoadingLocations(false);
 
       if (pokemon.cries && pokemon.cries.latest) {
         audioRef.current = new Audio(pokemon.cries.latest);
@@ -134,15 +138,26 @@ export default function PokemonModal({ pokemon, onClose }) {
     }
   };
 
+  const hasShowdown = isShiny 
+    ? !!pokemon.sprites.other?.showdown?.front_shiny 
+    : !!pokemon.sprites.other?.showdown?.front_default;
+
   let spriteUrl = '';
   if (imageStyle === 'official') {
     spriteUrl = isShiny 
       ? (pokemon.sprites.other['official-artwork'].front_shiny || pokemon.sprites.front_shiny)
       : (pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default);
   } else if (imageStyle === 'showdown') {
-    spriteUrl = isShiny 
-      ? (pokemon.sprites.other?.showdown?.front_shiny || pokemon.sprites.front_shiny)
-      : (pokemon.sprites.other?.showdown?.front_default || pokemon.sprites.front_default);
+    if (hasShowdown) {
+      spriteUrl = isShiny 
+        ? pokemon.sprites.other.showdown.front_shiny 
+        : pokemon.sprites.other.showdown.front_default;
+    } else {
+      // Fallback to high-quality official artwork instead of pixel fallback
+      spriteUrl = isShiny 
+        ? (pokemon.sprites.other['official-artwork'].front_shiny || pokemon.sprites.front_shiny)
+        : (pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default);
+    }
   } else {
     spriteUrl = isShiny ? pokemon.sprites.front_shiny : pokemon.sprites.front_default;
   }
@@ -196,8 +211,13 @@ export default function PokemonModal({ pokemon, onClose }) {
               {imageStyle === 'pixel' && <div className="font-bold text-xs w-6 h-6 flex items-center justify-center">8b</div>}
             </button>
           </div>
-          <div className="mt-2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/50 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm z-10">
-            {imageStyle === 'official' ? t('styleOfficial') : imageStyle === 'showdown' ? t('styleAnimated') : t('stylePixel')}
+          <div className="mt-2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/50 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm z-10 flex flex-col items-center">
+            <span>{imageStyle === 'official' ? t('styleOfficial') : imageStyle === 'showdown' ? t('styleAnimated') : t('stylePixel')}</span>
+            {imageStyle === 'showdown' && !hasShowdown && (
+              <span className="text-[9px] text-red-500 font-extrabold normal-case mt-0.5">
+                ({lang === 'es' ? 'No disponible - Arte Oficial' : 'N/A - Official Art'})
+              </span>
+            )}
           </div>
         </div>
 
@@ -242,6 +262,22 @@ export default function PokemonModal({ pokemon, onClose }) {
               className={`pb-3 font-bold text-sm transition-colors border-b-2 ${activeTab === 'moves' ? 'border-red-500 text-red-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
             >
               {t('moves')}
+            </button>
+            <button 
+              onClick={() => {
+                setActiveTab('locations');
+                if (locations.length === 0 && !loadingLocations) {
+                  setLoadingLocations(true);
+                  fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}/encounters`)
+                    .then(r => r.json())
+                    .then(data => { setLocations(data); setLoadingLocations(false); })
+                    .catch(() => setLoadingLocations(false));
+                }
+              }}
+              className={`pb-3 font-bold text-sm transition-colors border-b-2 flex items-center gap-1 ${activeTab === 'locations' ? 'border-red-500 text-red-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              <MapPin size={14} />
+              {t('locations') || 'Ubicaciones'}
             </button>
           </div>
 
@@ -403,6 +439,45 @@ export default function PokemonModal({ pokemon, onClose }) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* LOCATIONS TAB */}
+            {activeTab === 'locations' && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                {loadingLocations ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-red-500"></div>
+                  </div>
+                ) : locations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <MapPin size={40} className="text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="text-slate-500 dark:text-slate-400 font-bold">{t('noLocations') || 'Sin ubicaciones conocidas'}</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">{t('noLocationsDesc') || 'Este Pokémon solo se obtiene por eventos, evolución o intercambio.'}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {locations.map((loc, idx) => {
+                      const locationName = loc.location_area.name.replace(/-/g, ' ');
+                      const gameVersions = loc.version_details.map(v => v.version.name);
+                      return (
+                        <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700">
+                          <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <MapPin size={16} className="text-red-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm text-slate-800 dark:text-white capitalize">{locationName}</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {gameVersions.map(v => (
+                                <span key={v} className="px-2 py-0.5 bg-slate-200 dark:bg-slate-600 rounded-md text-[10px] font-bold text-slate-600 dark:text-slate-300 capitalize">{v}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

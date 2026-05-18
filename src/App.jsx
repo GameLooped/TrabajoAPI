@@ -12,6 +12,7 @@ import Favorites from './pages/Favorites';
 import Compare from './pages/Compare';
 import TypeChart from './pages/TypeChart';
 import RandomPokemon from './pages/RandomPokemon';
+import StatsRanking from './pages/StatsRanking';
 import './index.css';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/typechart" element={<TypeChart />} />
                 <Route path="/random" element={<RandomPokemon />} />
+                <Route path="/ranking" element={<StatsRanking />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

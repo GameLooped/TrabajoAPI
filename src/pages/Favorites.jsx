@@ -3,7 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useFavorites } from '../context/FavoritesContext';
 import PokemonCard from '../components/PokemonCard';
 import PokemonModal from '../components/PokemonModal';
-import { Heart, Shield, BarChart3, HeartOff, Search, X, Plus, Loader2 } from 'lucide-react';
+import { Heart, Shield, BarChart3, HeartOff, Search, X, Plus, Loader2, Download } from 'lucide-react';
 
 const ALL_LEGENDARY_IDS = new Set([
   144,145,146,150,151,243,244,245,249,250,251,
@@ -207,8 +207,111 @@ export default function Favorites() {
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [view, setView] = useState('favorites');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const currentList = view === 'favorites' ? favorites : team;
+
+  // Export team as image using Canvas
+  const exportTeamImage = async () => {
+    if (team.length === 0) return;
+    setExporting(true);
+    try {
+      const canvas = document.createElement('canvas');
+      const cols = Math.min(team.length, 3);
+      const rows = Math.ceil(team.length / 3);
+      canvas.width = cols * 220 + 40;
+      canvas.height = rows * 240 + 120;
+      const ctx = canvas.getContext('2d');
+
+      // Background
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Title
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 28px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('NexusDex - Mi Equipo', canvas.width / 2, 45);
+      ctx.font = '14px Arial, sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`${team.length}/6 Pokémon`, canvas.width / 2, 68);
+
+      // Draw each pokemon
+      const loadImage = (url) => new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+
+      for (let i = 0; i < team.length; i++) {
+        const p = team[i];
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        const x = 20 + col * 220;
+        const y = 90 + row * 240;
+
+        // Card bg
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.beginPath();
+        ctx.roundRect(x, y, 200, 220, 16);
+        ctx.fill();
+
+        // Pokemon image
+        const spriteUrl = p.sprites.other?.['official-artwork']?.front_default || p.sprites.front_default;
+        const img = await loadImage(spriteUrl);
+        if (img) ctx.drawImage(img, x + 50, y + 10, 100, 100);
+
+        // Name
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.name.charAt(0).toUpperCase() + p.name.slice(1), x + 100, y + 130);
+
+        // Types
+        const typeHex = { normal:'#A8A77A', fire:'#EE8130', water:'#6390F0', electric:'#F7D02C', grass:'#7AC74C', ice:'#96D9D6', fighting:'#C22E28', poison:'#A33EA1', ground:'#E2BF65', flying:'#A98FF3', psychic:'#F95587', bug:'#A6B91A', rock:'#B6A136', ghost:'#735797', dragon:'#6F35FC', dark:'#705746', steel:'#B7B7CE', fairy:'#D685AD' };
+        const types = p.types.map(t => t.type.name);
+        const typesWidth = types.length * 70 + (types.length - 1) * 6;
+        let tx = x + 100 - typesWidth / 2;
+        types.forEach(type => {
+          ctx.fillStyle = typeHex[type] || '#888';
+          ctx.beginPath();
+          ctx.roundRect(tx, y + 140, 64, 20, 10);
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 9px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(type.toUpperCase(), tx + 32, y + 154);
+          tx += 76;
+        });
+
+        // Stats total
+        const total = p.stats.reduce((s, st) => s + st.base_stat, 0);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Stats: ${total}`, x + 100, y + 185);
+
+        // ID
+        ctx.fillStyle = '#475569';
+        ctx.font = 'bold 11px Arial, sans-serif';
+        ctx.fillText(`#${String(p.id).padStart(3, '0')}`, x + 100, y + 205);
+      }
+
+      // Download
+      const link = document.createElement('a');
+      link.download = 'nexusdex-team.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Export error:', err);
+    }
+    setExporting(false);
+  };
 
   // Calculate team types
   const teamTypes = new Set();
@@ -243,10 +346,18 @@ export default function Favorites() {
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
               <BarChart3 size={20} className="text-blue-500" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="font-black text-slate-800 dark:text-white">{t('teamAnalysis') || 'Análisis del Equipo'}</h3>
               <p className="text-xs text-slate-400">{team.length}/6 Pokémon</p>
             </div>
+            <button
+              onClick={exportTeamImage}
+              disabled={exporting}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all hover:scale-105 shadow-sm disabled:opacity-60"
+            >
+              {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {t('exportImage') || 'Exportar'}
+            </button>
           </div>
 
           <div className="p-5 space-y-4">

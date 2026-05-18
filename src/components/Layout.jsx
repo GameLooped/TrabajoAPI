@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
-import { LogOut, Sun, Moon, BookOpen, Backpack, Cherry, Heart, Swords, ScanEye, Shuffle } from 'lucide-react';
+import { LogOut, Sun, Moon, BookOpen, Backpack, Cherry, Heart, Swords, ScanEye, Shuffle, Trophy } from 'lucide-react';
 
 export default function Layout() {
   const { t, lang, toggleLanguage } = useLanguage();
@@ -25,6 +25,7 @@ export default function Layout() {
     { path: '/compare', icon: <Swords size={18} />, label: t('comparator') || 'Comparar', color: 'text-blue-500' },
     { path: '/typechart', icon: <ScanEye size={18} />, label: t('whosThat') || '¿Quién es?', color: 'text-purple-500' },
     { path: '/random', icon: <Shuffle size={18} />, label: t('random') || 'Aleatorio', color: 'text-emerald-500' },
+    { path: '/ranking', icon: <Trophy size={18} />, label: t('statsRanking') || 'Ranking', color: 'text-yellow-500' },
   ];
 
   return (
