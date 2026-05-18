@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -14,6 +14,12 @@ export default function Auth() {
   const { t, lang, toggleLanguage } = useLanguage();
   const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (localStorage.getItem('isAuthenticated') === 'true') {
+      navigate('/pokedex');
+    }
+  }, [navigate]);
 
   // Load existing users from LocalStorage or initialize with a default one
   const getRegisteredUsers = () => {
