@@ -11,7 +11,7 @@ export default function Filters({ searchTerm, setSearchTerm, selectedType, setSe
   ];
 
   return (
-    <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+    <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 flex flex-col md:flex-row gap-4 items-center justify-between">
       <div className="relative w-full md:w-1/3">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-slate-400 dark:text-slate-500" />
