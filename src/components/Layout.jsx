@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useFavorites } from '../context/FavoritesContext';
@@ -11,6 +11,12 @@ export default function Layout() {
   const { favorites } = useFavorites();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
