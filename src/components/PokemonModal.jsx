@@ -10,6 +10,18 @@ const typeColors = {
   steel: 'bg-slate-400', fairy: 'bg-pink-300',
 };
 
+// Same set from Pokedex — needed to detect legendary in modal
+const ALL_LEGENDARY_IDS = new Set([
+  144,145,146,150,151,243,244,245,249,250,251,
+  377,378,379,380,381,382,383,384,385,386,
+  480,481,482,483,484,485,486,487,488,489,490,491,492,493,
+  494,638,639,640,641,642,643,644,645,646,647,648,649,
+  716,717,718,719,720,721,
+  772,773,785,786,787,788,789,790,791,792,800,801,802,807,808,809,
+  888,889,890,891,892,893,894,895,896,897,898,
+  1001,1002,1003,1004,1007,1008,1014,1015,1016,1017,1024,1025
+]);
+
 export default function PokemonModal({ pokemon, onClose }) {
   const { t, lang } = useLanguage();
   
@@ -113,6 +125,7 @@ export default function PokemonModal({ pokemon, onClose }) {
 
   const mainType = pokemon.types[0].type.name;
   const bgColor = typeColors[mainType] || 'bg-slate-200';
+  const isLegendary = ALL_LEGENDARY_IDS.has(pokemon.id);
 
   const playCry = () => {
     if (audioRef.current) {
@@ -141,7 +154,7 @@ export default function PokemonModal({ pokemon, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         {/* Left Side: Image & Core Info */}
-        <div className={`w-full md:w-2/5 p-6 md:p-8 flex flex-col items-center justify-center relative shrink-0 ${bgColor} bg-opacity-20 dark:bg-opacity-40`}>
+        <div className={`w-full md:w-2/5 p-6 md:p-8 flex flex-col items-center justify-center relative shrink-0 ${isLegendary ? 'legendary-rainbow-bg' : `${bgColor} bg-opacity-20 dark:bg-opacity-40`}`}>
           <div className="absolute top-4 left-4 text-slate-600/50 dark:text-slate-400/50 font-black text-5xl">
             #{String(pokemon.id).padStart(3, '0')}
           </div>
