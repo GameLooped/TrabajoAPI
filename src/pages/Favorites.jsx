@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useFavorites } from '../context/FavoritesContext';
 import PokemonCard from '../components/PokemonCard';
@@ -30,6 +31,7 @@ export default function Favorites() {
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [view, setView] = useState('favorites');
 
+  const navigate = useNavigate();
   const currentList = view === 'favorites' ? favorites : team;
 
   // Calculate team types
@@ -119,9 +121,14 @@ export default function Favorites() {
               ))}
               {/* Empty slots */}
               {Array.from({ length: 6 - team.length }).map((_, i) => (
-                <div key={`empty-${i}`} className="w-12 h-12 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center">
-                  <span className="text-slate-300 dark:text-slate-600 text-lg">+</span>
-                </div>
+                <button 
+                  key={`empty-${i}`} 
+                  onClick={() => navigate('/pokedex')}
+                  className="w-12 h-12 rounded-full border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-500 transition-all cursor-pointer group"
+                  title={t('addPokemon') || 'Agregar Pokémon'}
+                >
+                  <span className="text-slate-300 dark:text-slate-600 text-lg font-bold group-hover:text-blue-500 transition-colors">+</span>
+                </button>
               ))}
             </div>
           </div>
