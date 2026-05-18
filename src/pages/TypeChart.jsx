@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Trophy, RotateCcw, Eye, Zap } from 'lucide-react';
+import { Trophy, RotateCcw, Eye, Zap, ScanEye } from 'lucide-react';
 
 export default function WhosThatPokemon() {
   const { t } = useLanguage();
@@ -89,10 +89,13 @@ export default function WhosThatPokemon() {
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-black text-slate-800 dark:text-white">
-          🔮 {t('whosThat') || '¿Quién es ese Pokémon?'}
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 mt-2">{t('whosThatDesc') || '¡Adivina el Pokémon por su silueta!'}</p>
+        <div className="inline-flex items-center gap-3 bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-3">
+          <ScanEye size={28} className="text-purple-500" />
+          <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+            {t('whosThat') || '¿Quién es ese Pokémon?'}
+          </h2>
+        </div>
+        <p className="text-slate-500 dark:text-slate-400">{t('whosThatDesc') || '¡Adivina el Pokémon por su silueta!'}</p>
       </div>
 
       {/* Score Board */}
