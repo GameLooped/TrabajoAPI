@@ -193,16 +193,52 @@ export default function Pokedex() {
     fetchPokemonBatch(newOffset, 50, false);
   };
 
-  // Apply text filter only (type/region/legendary handled by fetching)
-  useEffect(() => {
-    let result = pokemonList;
+  // Search directly from API when user types a name
+  const searchTimerRef = useRef(null);
 
+  useEffect(() => {
+    // First, filter locally
+    let result = pokemonList;
     if (searchTerm) {
       result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
-
     setFilteredList(result);
-  }, [searchTerm, selectedType, pokemonList]);
+
+    // If no local results and search is 3+ chars, try API after a short delay
+    if (searchTerm.length >= 3 && result.length === 0 && !selectedType && !selectedRegion && !legendariesOnly) {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(async () => {
+        try {
+          // Try exact match first
+          const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${searchTerm.toLowerCase()}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFilteredList([data]);
+            return;
+          }
+        } catch (err) { /* not found by exact name */ }
+
+        // Try partial match from full list
+        try {
+          const listRes = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
+          const listData = await listRes.json();
+          const matches = listData.results
+            .filter(p => p.name.includes(searchTerm.toLowerCase()))
+            .slice(0, 12);
+
+          if (matches.length > 0) {
+            const pokemonPromises = matches.map(m => fetch(m.url).then(r => r.json()));
+            const results = await Promise.all(pokemonPromises);
+            setFilteredList(results.sort((a, b) => a.id - b.id));
+          }
+        } catch (err) {
+          console.error('Search error:', err);
+        }
+      }, 400);
+    }
+
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchTerm, pokemonList]);
 
   return (
     <div className="relative">
