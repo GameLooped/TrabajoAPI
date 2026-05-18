@@ -165,7 +165,7 @@ export default function PokemonModal({ pokemon, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row animate-in fade-in zoom-in duration-300 overflow-hidden"
+        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row animate-in fade-in zoom-in duration-300 overflow-y-auto md:overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Left Side: Image & Core Info */}
@@ -244,7 +244,7 @@ export default function PokemonModal({ pokemon, onClose }) {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-slate-700 px-6 gap-6 shrink-0">
+          <div className="flex border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 gap-4 md:gap-6 overflow-x-auto scrollbar-hide shrink-0 whitespace-nowrap">
             <button 
               onClick={() => setActiveTab('profile')}
               className={`pb-3 font-bold text-sm transition-colors border-b-2 ${activeTab === 'profile' ? 'border-red-500 text-red-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
