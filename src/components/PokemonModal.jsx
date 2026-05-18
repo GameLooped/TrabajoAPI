@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Volume2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { X, Volume2, Sparkles, Image as ImageIcon, Layers } from 'lucide-react';
 
 const typeColors = {
   normal: 'bg-stone-400', fire: 'bg-red-500', water: 'bg-blue-500', electric: 'bg-yellow-400',
@@ -19,6 +19,8 @@ export default function PokemonModal({ pokemon, onClose }) {
   const [speciesData, setSpeciesData] = useState(null);
   const [description, setDescription] = useState('');
   const [evolutionChain, setEvolutionChain] = useState([]);
+  const [typeRelations, setTypeRelations] = useState({ weaknesses: [], resistances: [], immunities: [] });
+  const [imageStyle, setImageStyle] = useState('official'); // official, showdown, pixel
   const [isLoadingExtra, setIsLoadingExtra] = useState(true);
 
   const audioRef = useRef(null);
@@ -30,6 +32,7 @@ export default function PokemonModal({ pokemon, onClose }) {
       setIsLoadingExtra(true);
       setEvolutionChain([]);
       setDescription('');
+      setTypeRelations({ weaknesses: [], resistances: [], immunities: [] });
 
       if (pokemon.cries && pokemon.cries.latest) {
         audioRef.current = new Audio(pokemon.cries.latest);
@@ -85,6 +88,24 @@ export default function PokemonModal({ pokemon, onClose }) {
           console.error("Error fetching species/evo:", err);
           setIsLoadingExtra(false);
         });
+
+      // Fetch Type Relations
+      const typePromises = pokemon.types.map(tInfo => fetch(tInfo.type.url).then(res => res.json()));
+      Promise.all(typePromises).then(typesData => {
+        const damageMultipliers = {};
+        typesData.forEach(typeData => {
+          const rel = typeData.damage_relations;
+          rel.double_damage_from.forEach(t => { damageMultipliers[t.name] = (damageMultipliers[t.name] || 1) * 2; });
+          rel.half_damage_from.forEach(t => { damageMultipliers[t.name] = (damageMultipliers[t.name] || 1) * 0.5; });
+          rel.no_damage_from.forEach(t => { damageMultipliers[t.name] = 0; });
+        });
+
+        const weaknesses = Object.keys(damageMultipliers).filter(t => damageMultipliers[t] > 1);
+        const resistances = Object.keys(damageMultipliers).filter(t => damageMultipliers[t] < 1 && damageMultipliers[t] > 0);
+        const immunities = Object.keys(damageMultipliers).filter(t => damageMultipliers[t] === 0);
+
+        setTypeRelations({ weaknesses, resistances, immunities });
+      }).catch(err => console.error("Error fetching types:", err));
     }
   }, [pokemon, lang]);
 
@@ -100,9 +121,18 @@ export default function PokemonModal({ pokemon, onClose }) {
     }
   };
 
-  const spriteUrl = isShiny 
-    ? (pokemon.sprites.other['official-artwork'].front_shiny || pokemon.sprites.front_shiny)
-    : (pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default);
+  let spriteUrl = '';
+  if (imageStyle === 'official') {
+    spriteUrl = isShiny 
+      ? (pokemon.sprites.other['official-artwork'].front_shiny || pokemon.sprites.front_shiny)
+      : (pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default);
+  } else if (imageStyle === 'showdown') {
+    spriteUrl = isShiny 
+      ? (pokemon.sprites.other?.showdown?.front_shiny || pokemon.sprites.front_shiny)
+      : (pokemon.sprites.other?.showdown?.front_default || pokemon.sprites.front_default);
+  } else {
+    spriteUrl = isShiny ? pokemon.sprites.front_shiny : pokemon.sprites.front_default;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
@@ -137,8 +167,24 @@ export default function PokemonModal({ pokemon, onClose }) {
               className={`p-3 rounded-full shadow-md transition-transform hover:scale-110 ${isShiny ? 'bg-yellow-400 text-yellow-900' : 'bg-white/80 dark:bg-slate-700/80 text-slate-800 dark:text-slate-200'}`}
               title="Toggle Shiny"
             >
-              {isShiny ? <Sparkles size={24} /> : <ImageIcon size={24} />}
+              {isShiny ? <Sparkles size={24} /> : <Sparkles size={24} className="opacity-50" />}
             </button>
+            <button 
+              onClick={() => {
+                if (imageStyle === 'official') setImageStyle('showdown');
+                else if (imageStyle === 'showdown') setImageStyle('pixel');
+                else setImageStyle('official');
+              }}
+              className="bg-white/80 dark:bg-slate-700/80 p-3 rounded-full shadow-md text-slate-800 dark:text-slate-200 hover:scale-110 transition-transform"
+              title={t('imageStyle') || 'Image Style'}
+            >
+              {imageStyle === 'official' && <ImageIcon size={24} />}
+              {imageStyle === 'showdown' && <Layers size={24} />}
+              {imageStyle === 'pixel' && <div className="font-bold text-xs w-6 h-6 flex items-center justify-center">8b</div>}
+            </button>
+          </div>
+          <div className="mt-2 text-xs font-bold text-slate-500 uppercase tracking-widest bg-white/50 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm z-10">
+            {imageStyle === 'official' ? t('styleOfficial') : imageStyle === 'showdown' ? t('styleAnimated') : t('stylePixel')}
           </div>
         </div>
 
@@ -218,6 +264,46 @@ export default function PokemonModal({ pokemon, onClose }) {
                       </span>
                     ))}
                   </div>
+                </div>
+
+                {/* TYPE RELATIONS */}
+                <div className="space-y-4 bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                  {typeRelations.weaknesses.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">{t('weaknesses') || 'Weaknesses'}</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {typeRelations.weaknesses.map(type => (
+                          <span key={type} className={`px-2 py-0.5 rounded text-xs font-bold text-white shadow-sm ${typeColors[type]}`}>
+                            {t(`types.${type}`).toUpperCase()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {typeRelations.resistances.length > 0 && (
+                    <div className="pt-2">
+                      <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">{t('resistances') || 'Resistances'}</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {typeRelations.resistances.map(type => (
+                          <span key={type} className={`px-2 py-0.5 rounded text-xs font-bold text-white shadow-sm ${typeColors[type]}`}>
+                            {t(`types.${type}`).toUpperCase()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {typeRelations.immunities.length > 0 && (
+                    <div className="pt-2">
+                      <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">{t('immunities') || 'Immunities'}</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {typeRelations.immunities.map(type => (
+                          <span key={type} className={`px-2 py-0.5 rounded text-xs font-bold text-white shadow-sm ${typeColors[type]}`}>
+                            {t(`types.${type}`).toUpperCase()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {speciesData && (

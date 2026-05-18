@@ -2,8 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import Layout from './components/Layout';
 import Auth from './pages/Auth';
 import Pokedex from './pages/Pokedex';
+import Items from './pages/Items';
+import Berries from './pages/Berries';
 import './index.css';
 
 function App() {
@@ -13,7 +16,11 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Auth />} />
-            <Route path="/pokedex" element={<Pokedex />} />
+            <Route element={<Layout />}>
+              <Route path="/pokedex" element={<Pokedex />} />
+              <Route path="/items" element={<Items />} />
+              <Route path="/berries" element={<Berries />} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
