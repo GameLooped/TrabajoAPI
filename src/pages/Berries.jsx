@@ -62,7 +62,7 @@ export default function Berries() {
 
   return (
     <div>
-      <div className="sticky top-20 z-40 mb-8 transition-all">
+      <div className="sticky top-[140px] md:top-24 z-40 mb-8 transition-all">
         <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
           <div className="relative w-full md:w-1/2">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

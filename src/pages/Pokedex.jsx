@@ -97,7 +97,7 @@ export default function Pokedex() {
   return (
     <div className="relative">
       <main>
-        <div className="sticky top-4 z-40 mb-8 transition-all">
+        <div className="sticky top-[140px] md:top-24 z-40 mb-8 transition-all">
           <Filters 
             searchTerm={searchTerm} 
             setSearchTerm={setSearchTerm}
