@@ -202,11 +202,12 @@ export default function Pokedex() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredList.map((pokemon) => (
+            {filteredList.map((pokemon, idx) => (
               <PokemonCard 
                 key={pokemon.id} 
                 pokemon={pokemon} 
                 isLegendary={ALL_LEGENDARY_IDS.has(pokemon.id)}
+                index={idx}
                 onClick={() => setSelectedPokemon(pokemon)}
               />
             ))}

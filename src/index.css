@@ -31,3 +31,44 @@ body {
   background-size: 400% 400%;
   animation: rainbow-shift 5s linear infinite;
 }
+
+/* Staggered card entry animations */
+@keyframes card-enter {
+  0% { opacity: 0; transform: translateY(24px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-stagger {
+  opacity: 0;
+  animation: card-enter 0.4s ease-out forwards;
+}
+
+/* Random Pokemon spin animation */
+@keyframes pokeball-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.pokeball-spin {
+  animation: pokeball-spin 0.6s ease-in-out;
+}
+
+/* Pulse glow for favorite hearts */
+@keyframes heart-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+.heart-pulse {
+  animation: heart-pulse 0.3s ease-in-out;
+}
+
+/* Stat bar fill animation */
+@keyframes stat-fill {
+  0% { width: 0%; }
+}
+
+.stat-bar-animated {
+  animation: stat-fill 0.8s ease-out forwards;
+}
