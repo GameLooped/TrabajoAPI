@@ -134,28 +134,56 @@ export default function Pokedex() {
     }
   };
 
-  // React to region + legendary changes
+  // Fetch pokemon by type from the API
+  const fetchPokemonByType = async (typeName) => {
+    try {
+      setPokemonList([]);
+      setLoading(true);
+      const res = await fetch(`https://pokeapi.co/api/v2/type/${typeName}`);
+      const data = await res.json();
+      // Get first 50 pokemon of this type (limited to main games, id <= 1025)
+      const slots = data.pokemon
+        .map(p => {
+          const id = parseInt(p.pokemon.url.split('/').filter(Boolean).pop());
+          return { ...p, id };
+        })
+        .filter(p => p.id <= 1025)
+        .slice(0, 50);
+
+      const pokemonPromises = slots.map(async (slot) => {
+        const pokeRes = await fetch(slot.pokemon.url);
+        return pokeRes.json();
+      });
+
+      const results = await Promise.all(pokemonPromises);
+      setPokemonList(results.sort((a, b) => a.id - b.id));
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching type Pokemon:", error);
+      setLoading(false);
+    }
+  };
+
+  // React to region + legendary + type changes
   useEffect(() => {
-    if (!clearListCalled.current) return; // skip first render
+    if (!clearListCalled.current) return;
 
     if (legendariesOnly) {
       if (selectedRegion) {
-        // Fetch legendaries of that specific region
         fetchPokemonByIds(regionLegendaries[selectedRegion] || []);
       } else {
-        // Fetch ALL legendaries
         fetchPokemonByIds([...ALL_LEGENDARY_IDS]);
       }
+    } else if (selectedType) {
+      fetchPokemonByType(selectedType);
+    } else if (selectedRegion) {
+      const { offset: rOffset, limit: rLimit } = regionData[selectedRegion];
+      fetchPokemonBatch(rOffset, rLimit, true);
     } else {
-      if (selectedRegion) {
-        const { offset: rOffset, limit: rLimit } = regionData[selectedRegion];
-        fetchPokemonBatch(rOffset, rLimit, true);
-      } else {
-        fetchPokemonBatch(0, 50, true);
-        setOffset(0);
-      }
+      fetchPokemonBatch(0, 50, true);
+      setOffset(0);
     }
-  }, [selectedRegion, legendariesOnly]);
+  }, [selectedRegion, legendariesOnly, selectedType]);
 
   useEffect(() => { clearListCalled.current = true; }, []);
 
@@ -165,16 +193,12 @@ export default function Pokedex() {
     fetchPokemonBatch(newOffset, 50, false);
   };
 
-  // Apply text/type filters
+  // Apply text filter only (type/region/legendary handled by fetching)
   useEffect(() => {
     let result = pokemonList;
 
     if (searchTerm) {
       result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-
-    if (selectedType) {
-      result = result.filter(p => p.types.some(tInfo => tInfo.type.name === selectedType));
     }
 
     setFilteredList(result);
@@ -219,7 +243,7 @@ export default function Pokedex() {
           </div>
         )}
         
-        {!loading && filteredList.length > 0 && !selectedRegion && !legendariesOnly && (
+        {!loading && filteredList.length > 0 && !selectedRegion && !legendariesOnly && !selectedType && (
           <div className="mt-12 flex justify-center">
             <button 
               onClick={handleLoadMore}
