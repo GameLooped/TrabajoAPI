@@ -11,6 +11,8 @@ export default function Pokedex() {
   const [pokemonList, setPokemonList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   
   // States for filters
@@ -28,17 +30,17 @@ export default function Pokedex() {
     if (!localStorage.getItem('isAuthenticated')) {
       navigate('/');
     } else {
-      fetchAllPokemon();
+      fetchPokemonBatch(0);
     }
   }, [navigate]);
 
-  // Initial bulk fetch for names to allow search/filtering
-  const fetchAllPokemon = async () => {
+  // Fetch pokemon in batches
+  const fetchPokemonBatch = async (currentOffset) => {
     try {
-      setLoading(true);
-      // Fetch a larger amount (e.g. 151 for Gen 1, or more) to allow local filtering
-      // To keep it performant for the demo, let's fetch 151
-      const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
+      if (currentOffset === 0) setLoading(true);
+      else setIsLoadingMore(true);
+
+      const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=50&offset=${currentOffset}`);
       const data = await res.json();
       
       const pokemonPromises = data.results.map(async (pokemon) => {
@@ -47,19 +49,31 @@ export default function Pokedex() {
       });
 
       const newPokemon = await Promise.all(pokemonPromises);
-      setPokemonList(newPokemon);
-      setFilteredList(newPokemon);
+      
+      setPokemonList(prev => {
+        // Prevent duplicates in StrictMode
+        const existingIds = new Set(prev.map(p => p.id));
+        const filteredNew = newPokemon.filter(p => !existingIds.has(p.id));
+        return [...prev, ...filteredNew];
+      });
 
-      // Pre-fetch some legendary species info in background for the first 151 
-      // (Articuno=144, Zapdos=145, Moltres=146, Mewtwo=150, Mew=151 is mythical but let's count it)
-      const legends = new Set([144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251]); // Hardcoded some for quick demo, a real app would fetch species data
-      setLegendaryIds(legends);
+      // Pre-fetch some legendary species info in background
+      const legends = new Set([144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493]); 
+      setLegendaryIds(prev => new Set([...prev, ...legends]));
       
       setLoading(false);
+      setIsLoadingMore(false);
     } catch (error) {
       console.error("Error fetching Pokemon data:", error);
       setLoading(false);
+      setIsLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    const newOffset = offset + 50;
+    setOffset(newOffset);
+    fetchPokemonBatch(newOffset);
   };
 
   // Apply filters whenever states change
@@ -153,6 +167,25 @@ export default function Pokedex() {
                 No Pokémon found matching your criteria.
               </div>
             )}
+          </div>
+        )}
+        
+        {!loading && filteredList.length > 0 && (
+          <div className="mt-12 flex justify-center">
+            <button 
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="bg-slate-800 hover:bg-slate-900 dark:bg-red-600 dark:hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 disabled:opacity-70 flex items-center gap-2"
+            >
+              {isLoadingMore ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                  {t('loading')}
+                </>
+              ) : (
+                t('loadMore') || 'Load More'
+              )}
+            </button>
           </div>
         )}
         
