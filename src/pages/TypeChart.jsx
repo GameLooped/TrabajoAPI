@@ -1,149 +1,209 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { Trophy, RotateCcw, Eye, Zap } from 'lucide-react';
 
-const allTypes = [
-  'normal','fire','water','electric','grass','ice','fighting','poison',
-  'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'
-];
-
-const typeColorHex = {
-  normal:'#A8A77A', fire:'#EE8130', water:'#6390F0', electric:'#F7D02C',
-  grass:'#7AC74C', ice:'#96D9D6', fighting:'#C22E28', poison:'#A33EA1',
-  ground:'#E2BF65', flying:'#A98FF3', psychic:'#F95587', bug:'#A6B91A',
-  rock:'#B6A136', ghost:'#735797', dragon:'#6F35FC', dark:'#705746',
-  steel:'#B7B7CE', fairy:'#D685AD'
-};
-
-export default function TypeChart() {
+export default function WhosThatPokemon() {
   const { t } = useLanguage();
-  const [typeData, setTypeData] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [hoveredCell, setHoveredCell] = useState(null);
+  const [pokemon, setPokemon] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [guess, setGuess] = useState('');
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(() => {
+    return parseInt(localStorage.getItem('wtpBestStreak') || '0');
+  });
+  const [result, setResult] = useState(null); // 'correct' | 'wrong' | null
+  const [history, setHistory] = useState([]);
 
-  useEffect(() => {
-    const fetchTypes = async () => {
-      setLoading(true);
-      const data = {};
-      const promises = allTypes.map(async (type) => {
-        const res = await fetch(`https://pokeapi.co/api/v2/type/${type}`);
-        const json = await res.json();
-        data[type] = json.damage_relations;
-      });
-      await Promise.all(promises);
-      setTypeData(data);
-      setLoading(false);
-    };
-    fetchTypes();
+  const fetchNewPokemon = useCallback(async () => {
+    setLoading(true);
+    setRevealed(false);
+    setGuess('');
+    setResult(null);
+    const randomId = Math.floor(Math.random() * 898) + 1;
+    try {
+      const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
+      const data = await res.json();
+      setPokemon(data);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
   }, []);
 
-  const getMultiplier = (attackType, defenseType) => {
-    if (!typeData[attackType]) return 1;
-    const rel = typeData[attackType];
-    if (rel.double_damage_to.some(t => t.name === defenseType)) return 2;
-    if (rel.half_damage_to.some(t => t.name === defenseType)) return 0.5;
-    if (rel.no_damage_to.some(t => t.name === defenseType)) return 0;
-    return 1;
+  useEffect(() => {
+    fetchNewPokemon();
+  }, []);
+
+  const handleGuess = () => {
+    if (!pokemon || !guess.trim()) return;
+    const isCorrect = guess.trim().toLowerCase() === pokemon.name.toLowerCase();
+    setRevealed(true);
+    
+    if (isCorrect) {
+      setResult('correct');
+      const newScore = score + 1;
+      const newStreak = streak + 1;
+      setScore(newScore);
+      setStreak(newStreak);
+      if (newStreak > bestStreak) {
+        setBestStreak(newStreak);
+        localStorage.setItem('wtpBestStreak', String(newStreak));
+      }
+    } else {
+      setResult('wrong');
+      setStreak(0);
+    }
+
+    setHistory(prev => [{
+      id: pokemon.id,
+      name: pokemon.name,
+      sprite: pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default,
+      correct: isCorrect,
+      guessed: guess.trim()
+    }, ...prev].slice(0, 10));
   };
 
-  const getCellColor = (mult) => {
-    if (mult === 2) return 'bg-green-500 text-white';
-    if (mult === 0.5) return 'bg-red-400 text-white';
-    if (mult === 0) return 'bg-slate-900 text-slate-400';
-    return 'bg-slate-100 dark:bg-slate-800 text-slate-400';
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      if (revealed) fetchNewPokemon();
+      else handleGuess();
+    }
   };
 
-  const getCellLabel = (mult) => {
-    if (mult === 2) return '2×';
-    if (mult === 0.5) return '½';
-    if (mult === 0) return '0';
-    return '1';
+  const handleSkip = () => {
+    setRevealed(true);
+    setResult('wrong');
+    setStreak(0);
+    setHistory(prev => [{
+      id: pokemon.id,
+      name: pokemon.name,
+      sprite: pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default,
+      correct: false,
+      guessed: '—'
+    }, ...prev].slice(0, 10));
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-500"></div>
-      </div>
-    );
-  }
 
   return (
-    <div>
-      <div className="text-center mb-6">
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-8">
         <h2 className="text-3xl font-black text-slate-800 dark:text-white">
-          ⚡ {t('typeChart') || 'Tabla de Tipos'}
+          🔮 {t('whosThat') || '¿Quién es ese Pokémon?'}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
-          {t('typeChartDesc') || 'Filas = Atacante, Columnas = Defensor'}
-        </p>
-        <div className="flex justify-center gap-4 mt-3 text-xs font-bold">
-          <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-green-500 inline-block"></span> 2× Super Efectivo</span>
-          <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-red-400 inline-block"></span> ½ No Efectivo</span>
-          <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-slate-900 inline-block"></span> 0 Inmune</span>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">{t('whosThatDesc') || '¡Adivina el Pokémon por su silueta!'}</p>
+      </div>
+
+      {/* Score Board */}
+      <div className="flex justify-center gap-4 mb-8">
+        <div className="bg-white dark:bg-slate-800 px-5 py-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+          <p className="text-xs font-bold text-slate-400 uppercase">{t('score') || 'Puntos'}</p>
+          <p className="text-2xl font-black text-green-500">{score}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-800 px-5 py-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+          <p className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 justify-center"><Zap size={12} /> {t('streak') || 'Racha'}</p>
+          <p className="text-2xl font-black text-orange-500">{streak}</p>
+        </div>
+        <div className="bg-white dark:bg-slate-800 px-5 py-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+          <p className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 justify-center"><Trophy size={12} /> {t('best') || 'Mejor'}</p>
+          <p className="text-2xl font-black text-yellow-500">{bestStreak}</p>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-        <table className="min-w-max border-collapse">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-10 bg-slate-200 dark:bg-slate-900 p-1 text-[9px] font-black text-slate-500 w-16">
-                ATK↓ DEF→
-              </th>
-              {allTypes.map(type => (
-                <th key={type} className="p-1">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-[8px] font-black uppercase leading-tight"
-                    style={{ backgroundColor: typeColorHex[type] }}
+      {/* Game Area */}
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        {loading ? (
+          <div className="flex justify-center items-center h-72">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-500"></div>
+          </div>
+        ) : pokemon && (
+          <>
+            {/* Silhouette / Reveal */}
+            <div className={`relative flex justify-center items-center py-10 transition-all duration-500 ${revealed ? (result === 'correct' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20') : 'bg-slate-900'}`}>
+              <img
+                src={pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default}
+                alt="mystery"
+                className={`w-56 h-56 object-contain drop-shadow-2xl transition-all duration-500 ${revealed ? '' : 'brightness-0 dark:brightness-0'}`}
+                style={revealed ? {} : { filter: 'brightness(0) drop-shadow(0 0 8px rgba(255,255,255,0.15))' }}
+              />
+              {revealed && result === 'correct' && (
+                <div className="absolute top-4 right-4 text-5xl animate-bounce">🎉</div>
+              )}
+              {revealed && result === 'wrong' && (
+                <div className="absolute top-4 right-4 text-5xl">😢</div>
+              )}
+            </div>
+
+            {/* Input / Result */}
+            <div className="p-6">
+              {!revealed ? (
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={guess}
+                    onChange={(e) => setGuess(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={t('typeName') || 'Escribe el nombre...'}
+                    autoFocus
+                    className="flex-1 px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-red-500 text-lg"
+                  />
+                  <button
+                    onClick={handleGuess}
+                    className="bg-red-500 hover:bg-red-600 text-white font-black px-6 py-3 rounded-xl transition-all hover:scale-105 shadow-lg"
                   >
-                    {type.slice(0, 3)}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {allTypes.map(atkType => (
-              <tr key={atkType}>
-                <td className="sticky left-0 z-10 bg-slate-100 dark:bg-slate-900 p-1">
-                  <div 
-                    className="w-16 h-8 rounded-lg flex items-center justify-center text-white text-[9px] font-black uppercase"
-                    style={{ backgroundColor: typeColorHex[atkType] }}
+                    ✓
+                  </button>
+                  <button
+                    onClick={handleSkip}
+                    className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-4 py-3 rounded-xl transition hover:bg-slate-300 dark:hover:bg-slate-600"
+                    title="Skip"
                   >
-                    {t(`types.${atkType}`).slice(0, 5)}
-                  </div>
-                </td>
-                {allTypes.map(defType => {
-                  const mult = getMultiplier(atkType, defType);
-                  const isHovered = hoveredCell?.atk === atkType && hoveredCell?.def === defType;
-                  return (
-                    <td 
-                      key={defType} 
-                      className="p-0.5"
-                      onMouseEnter={() => setHoveredCell({ atk: atkType, def: defType })}
-                      onMouseLeave={() => setHoveredCell(null)}
-                    >
-                      <div className={`w-10 h-8 rounded flex items-center justify-center text-xs font-black transition-transform ${getCellColor(mult)} ${isHovered ? 'scale-125 ring-2 ring-white shadow-lg z-10 relative' : ''}`}>
-                        {getCellLabel(mult)}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <Eye size={20} />
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  {result === 'correct' ? (
+                    <p className="text-2xl font-black text-green-500 mb-1">
+                      🎯 {t('correct') || '¡Correcto!'}
+                    </p>
+                  ) : (
+                    <p className="text-2xl font-black text-red-500 mb-1">
+                      ✗ {t('wrong') || 'Incorrecto'}
+                    </p>
+                  )}
+                  <p className="text-3xl font-black capitalize text-slate-800 dark:text-white mb-4">
+                    {pokemon.name}
+                  </p>
+                  <button
+                    onClick={fetchNewPokemon}
+                    autoFocus
+                    className="bg-slate-800 dark:bg-red-600 hover:bg-slate-900 dark:hover:bg-red-700 text-white font-black px-8 py-3 rounded-xl transition-all hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"
+                  >
+                    <RotateCcw size={18} />
+                    {t('next') || 'Siguiente'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {hoveredCell && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 px-6 py-3 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 text-sm font-bold z-50">
-          <span className="capitalize" style={{ color: typeColorHex[hoveredCell.atk] }}>{hoveredCell.atk}</span>
-          {' → '}
-          <span className="capitalize" style={{ color: typeColorHex[hoveredCell.def] }}>{hoveredCell.def}</span>
-          {': '}
-          <span className={getMultiplier(hoveredCell.atk, hoveredCell.def) === 2 ? 'text-green-500' : getMultiplier(hoveredCell.atk, hoveredCell.def) < 1 ? 'text-red-500' : 'text-slate-500'}>
-            {getCellLabel(getMultiplier(hoveredCell.atk, hoveredCell.def))}
-          </span>
+      {/* History */}
+      {history.length > 0 && (
+        <div className="mt-8">
+          <h3 className="font-bold text-slate-800 dark:text-white mb-3">{t('recentHistory') || 'Historial reciente'}</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {history.map((entry, idx) => (
+              <div key={idx} className={`shrink-0 w-20 text-center p-2 rounded-xl border-2 ${entry.correct ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-red-400 bg-red-50 dark:bg-red-900/20'}`}>
+                <img src={entry.sprite} alt={entry.name} className="w-14 h-14 mx-auto object-contain" />
+                <p className="text-[10px] font-bold capitalize text-slate-700 dark:text-slate-300 truncate">{entry.name}</p>
+                <p className="text-[10px]">{entry.correct ? '✓' : '✗'}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
