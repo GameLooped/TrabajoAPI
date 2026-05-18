@@ -2,7 +2,7 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Search } from 'lucide-react';
 
-export default function Filters({ searchTerm, setSearchTerm, selectedType, setSelectedType, legendariesOnly, setLegendariesOnly }) {
+export default function Filters({ searchTerm, setSearchTerm, selectedType, setSelectedType, selectedRegion, setSelectedRegion, legendariesOnly, setLegendariesOnly }) {
   const { t } = useLanguage();
 
   const types = [
@@ -35,6 +35,23 @@ export default function Filters({ searchTerm, setSearchTerm, selectedType, setSe
           {types.map(type => (
             <option key={type} value={type}>{t(`types.${type}`)}</option>
           ))}
+        </select>
+
+        <select
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
+          className="block w-full sm:w-40 pl-3 pr-10 py-3 text-base border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-xl bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border"
+        >
+          <option value="">{t('allRegions') || 'Todas las Regiones'}</option>
+          <option value="kanto">Kanto</option>
+          <option value="johto">Johto</option>
+          <option value="hoenn">Hoenn</option>
+          <option value="sinnoh">Sinnoh</option>
+          <option value="unova">Unova</option>
+          <option value="kalos">Kalos</option>
+          <option value="alola">Alola</option>
+          <option value="galar">Galar</option>
+          <option value="paldea">Paldea</option>
         </select>
 
         <label className="flex items-center gap-2 cursor-pointer group">

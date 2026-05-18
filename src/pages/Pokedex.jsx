@@ -16,6 +16,7 @@ export default function Pokedex() {
   // States for filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [legendariesOnly, setLegendariesOnly] = useState(false);
   const [legendaryIds, setLegendaryIds] = useState(new Set()); // To store which IDs are legendary
 
@@ -89,8 +90,20 @@ export default function Pokedex() {
       result = result.filter(p => legendaryIds.has(p.id));
     }
 
+    if (selectedRegion) {
+      if (selectedRegion === 'kanto') result = result.filter(p => p.id >= 1 && p.id <= 151);
+      else if (selectedRegion === 'johto') result = result.filter(p => p.id >= 152 && p.id <= 251);
+      else if (selectedRegion === 'hoenn') result = result.filter(p => p.id >= 252 && p.id <= 386);
+      else if (selectedRegion === 'sinnoh') result = result.filter(p => p.id >= 387 && p.id <= 493);
+      else if (selectedRegion === 'unova') result = result.filter(p => p.id >= 494 && p.id <= 649);
+      else if (selectedRegion === 'kalos') result = result.filter(p => p.id >= 650 && p.id <= 721);
+      else if (selectedRegion === 'alola') result = result.filter(p => p.id >= 722 && p.id <= 809);
+      else if (selectedRegion === 'galar') result = result.filter(p => p.id >= 810 && p.id <= 898);
+      else if (selectedRegion === 'paldea') result = result.filter(p => p.id >= 906 && p.id <= 1025);
+    }
+
     setFilteredList(result);
-  }, [searchTerm, selectedType, legendariesOnly, pokemonList, legendaryIds]);
+  }, [searchTerm, selectedType, legendariesOnly, selectedRegion, pokemonList, legendaryIds]);
 
   // Handle logout is now in Layout.jsx
 
@@ -103,6 +116,8 @@ export default function Pokedex() {
             setSearchTerm={setSearchTerm}
             selectedType={selectedType}
             setSelectedType={setSelectedType}
+            selectedRegion={selectedRegion}
+            setSelectedRegion={setSelectedRegion}
             legendariesOnly={legendariesOnly}
             setLegendariesOnly={setLegendariesOnly}
           />
@@ -118,6 +133,7 @@ export default function Pokedex() {
               <PokemonCard 
                 key={pokemon.id} 
                 pokemon={pokemon} 
+                isLegendary={legendaryIds.has(pokemon.id)}
                 onClick={() => setSelectedPokemon(pokemon)}
               />
             ))}
