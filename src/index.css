@@ -4,3 +4,19 @@
 body {
   @apply bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300;
 }
+
+/* Animated Rainbow Badge for Legendary Pokémon */
+@keyframes rainbow-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.legendary-rainbow {
+  background: linear-gradient(
+    90deg,
+    #ff0000, #ff8800, #ffdd00, #00cc44, #0088ff, #8800ff, #ff00cc, #ff0000
+  );
+  background-size: 300% 100%;
+  animation: rainbow-shift 3s linear infinite;
+}

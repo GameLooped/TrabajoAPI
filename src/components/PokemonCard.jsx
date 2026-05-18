@@ -43,8 +43,8 @@ export default function PokemonCard({ pokemon, onClick, isLegendary }) {
       
       <div className="relative p-6 pt-8 flex flex-col items-center">
         {isLegendary && (
-          <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-600 text-yellow-900 text-[10px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-wider border border-yellow-200">
-            {t('legendary') || 'Legendario'}
+          <div className="absolute top-2 left-2 legendary-rainbow text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-wider border border-white/30 drop-shadow-md">
+            ✦ {t('legendary') || 'Legendario'}
           </div>
         )}
         <div className="absolute top-4 right-4 text-slate-700/50 font-bold text-xl">
