@@ -128,9 +128,21 @@ export default function Layout() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         <Outlet />
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-850/60 backdrop-blur-md py-5 transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-xs sm:text-sm font-black text-slate-600 dark:text-slate-300">
+            Nexus<span className="text-red-500 font-extrabold">Dex</span> Ultimate &copy; {new Date().getFullYear()} &bull; {t('footerText')}
+          </p>
+          <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1 font-bold">
+            {t('footerRights')}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
