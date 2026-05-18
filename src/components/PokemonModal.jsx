@@ -107,11 +107,11 @@ export default function PokemonModal({ pokemon, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-300"
+        className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row animate-in fade-in zoom-in duration-300 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Left Side: Image & Core Info */}
-        <div className={`w-full md:w-2/5 p-6 md:p-8 flex flex-col items-center justify-center relative ${bgColor} bg-opacity-20 dark:bg-opacity-40`}>
+        <div className={`w-full md:w-2/5 p-6 md:p-8 flex flex-col items-center justify-center relative shrink-0 ${bgColor} bg-opacity-20 dark:bg-opacity-40`}>
           <div className="absolute top-4 left-4 text-slate-600/50 dark:text-slate-400/50 font-black text-5xl">
             #{String(pokemon.id).padStart(3, '0')}
           </div>
@@ -143,9 +143,9 @@ export default function PokemonModal({ pokemon, onClose }) {
         </div>
 
         {/* Right Side: Data Tabs */}
-        <div className="w-full md:w-3/5 flex flex-col h-full bg-white dark:bg-slate-800">
+        <div className="w-full md:w-3/5 flex flex-col flex-1 min-h-0 bg-white dark:bg-slate-800">
           {/* Header */}
-          <div className="p-6 pb-0 flex justify-between items-start">
+          <div className="p-6 pb-0 flex justify-between items-start shrink-0">
             <div>
               <h2 className="text-4xl font-black capitalize text-slate-800 dark:text-white mb-2">{pokemon.name}</h2>
               <div className="flex gap-2 mb-4 flex-wrap">
@@ -165,7 +165,7 @@ export default function PokemonModal({ pokemon, onClose }) {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-slate-700 px-6 gap-6">
+          <div className="flex border-b border-slate-200 dark:border-slate-700 px-6 gap-6 shrink-0">
             <button 
               onClick={() => setActiveTab('profile')}
               className={`pb-3 font-bold text-sm transition-colors border-b-2 ${activeTab === 'profile' ? 'border-red-500 text-red-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
@@ -187,7 +187,7 @@ export default function PokemonModal({ pokemon, onClose }) {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 min-h-0">
             
             {/* PROFILE TAB */}
             {activeTab === 'profile' && (
