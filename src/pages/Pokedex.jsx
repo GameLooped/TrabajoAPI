@@ -23,22 +23,38 @@ export default function Pokedex() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
 
+  const regionData = {
+    kanto: { offset: 0, limit: 151 },
+    johto: { offset: 151, limit: 100 },
+    hoenn: { offset: 251, limit: 135 },
+    sinnoh: { offset: 386, limit: 107 },
+    unova: { offset: 493, limit: 156 },
+    kalos: { offset: 649, limit: 72 },
+    alola: { offset: 721, limit: 88 },
+    galar: { offset: 809, limit: 89 }, // Includes Hisui
+    paldea: { offset: 898, limit: 127 }
+  };
+
   // On mount
   useEffect(() => {
     if (!localStorage.getItem('isAuthenticated')) {
       navigate('/');
     } else {
-      fetchPokemonBatch(0);
+      fetchPokemonBatch(0, 50, true);
     }
   }, [navigate]);
 
   // Fetch pokemon in batches
-  const fetchPokemonBatch = async (currentOffset) => {
+  const fetchPokemonBatch = async (currentOffset, limit = 50, clearList = false) => {
     try {
-      if (currentOffset === 0) setLoading(true);
-      else setIsLoadingMore(true);
+      if (clearList) {
+        setPokemonList([]);
+        setLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
 
-      const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=50&offset=${currentOffset}`);
+      const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${currentOffset}`);
       const data = await res.json();
       
       const pokemonPromises = data.results.map(async (pokemon) => {
@@ -49,13 +65,12 @@ export default function Pokedex() {
       const newPokemon = await Promise.all(pokemonPromises);
       
       setPokemonList(prev => {
-        // Prevent duplicates in StrictMode
+        if (clearList) return newPokemon;
         const existingIds = new Set(prev.map(p => p.id));
         const filteredNew = newPokemon.filter(p => !existingIds.has(p.id));
         return [...prev, ...filteredNew];
       });
 
-      // Pre-fetch some legendary species info in background
       const legends = new Set([144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493]); 
       setLegendaryIds(prev => new Set([...prev, ...legends]));
       
@@ -68,10 +83,25 @@ export default function Pokedex() {
     }
   };
 
+  // When Region changes, fetch specific range
+  useEffect(() => {
+    if (selectedRegion) {
+      const { offset: rOffset, limit: rLimit } = regionData[selectedRegion];
+      fetchPokemonBatch(rOffset, rLimit, true);
+    } else if (pokemonList.length > 0 && clearListCalled.current) {
+      // Avoid fetching on first mount since it's handled above, but if cleared, fetch default
+      fetchPokemonBatch(0, 50, true);
+      setOffset(0);
+    }
+  }, [selectedRegion]);
+
+  const clearListCalled = React.useRef(false);
+  useEffect(() => { clearListCalled.current = true; }, []);
+
   const handleLoadMore = () => {
     const newOffset = offset + 50;
     setOffset(newOffset);
-    fetchPokemonBatch(newOffset);
+    fetchPokemonBatch(newOffset, 50, false);
   };
 
   // Apply filters whenever states change
@@ -90,20 +120,8 @@ export default function Pokedex() {
       result = result.filter(p => legendaryIds.has(p.id));
     }
 
-    if (selectedRegion) {
-      if (selectedRegion === 'kanto') result = result.filter(p => p.id >= 1 && p.id <= 151);
-      else if (selectedRegion === 'johto') result = result.filter(p => p.id >= 152 && p.id <= 251);
-      else if (selectedRegion === 'hoenn') result = result.filter(p => p.id >= 252 && p.id <= 386);
-      else if (selectedRegion === 'sinnoh') result = result.filter(p => p.id >= 387 && p.id <= 493);
-      else if (selectedRegion === 'unova') result = result.filter(p => p.id >= 494 && p.id <= 649);
-      else if (selectedRegion === 'kalos') result = result.filter(p => p.id >= 650 && p.id <= 721);
-      else if (selectedRegion === 'alola') result = result.filter(p => p.id >= 722 && p.id <= 809);
-      else if (selectedRegion === 'galar') result = result.filter(p => p.id >= 810 && p.id <= 898);
-      else if (selectedRegion === 'paldea') result = result.filter(p => p.id >= 906 && p.id <= 1025);
-    }
-
     setFilteredList(result);
-  }, [searchTerm, selectedType, legendariesOnly, selectedRegion, pokemonList, legendaryIds]);
+  }, [searchTerm, selectedType, legendariesOnly, pokemonList, legendaryIds]);
 
   // Handle logout is now in Layout.jsx
 
@@ -145,7 +163,7 @@ export default function Pokedex() {
           </div>
         )}
         
-        {!loading && filteredList.length > 0 && (
+        {!loading && filteredList.length > 0 && !selectedRegion && (
           <div className="mt-12 flex justify-center">
             <button 
               onClick={handleLoadMore}
